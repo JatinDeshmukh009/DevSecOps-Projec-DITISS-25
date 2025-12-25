@@ -1,8 +1,8 @@
 # Use lightweight Python image
-FROM python
+FROM python:3.10-alpine
 
 # Set working directory
-WORKDIR /app
+WORKDIR /bin
 
 # Copy dependency file first (layer caching)
 COPY requirements.txt .
