@@ -1,7 +1,7 @@
 pipeline {
     agent {
-        label 'jenkins_agent'  
-         }
+        label 'jenkins_agent'
+    }
 
     options {
         timestamps()
@@ -10,6 +10,8 @@ pipeline {
 
     environment {
         VENV = "venv"
+        IMAGE_REPO = "flask-app"
+        IMAGE_TAG  = "${BUILD_NUMBER}"
     }
 
     stages {
@@ -67,6 +69,54 @@ pipeline {
                 }
             }
         }
+
+        /* ---------- DOCKER STAGES (ADDED) ---------- */
+
+        stage('Build Docker Image') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-creds',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    ansiColor('xterm') {
+                        sh '''
+                            IMAGE_NAME=$DOCKER_USER/$IMAGE_REPO
+
+                            docker build -t $IMAGE_NAME:$IMAGE_TAG .
+                            docker tag $IMAGE_NAME:$IMAGE_TAG $IMAGE_NAME:latest
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Docker Login') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-creds',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    ansiColor('xterm') {
+                        sh '''
+                            echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                ansiColor('xterm') {
+                    sh '''
+                        docker push $IMAGE_NAME:$IMAGE_TAG
+                        docker push $IMAGE_NAME:latest
+                    '''
+                }
+            }
+        }
     }
 
     post {
@@ -77,6 +127,7 @@ pipeline {
             echo "❌ Pipeline failed"
         }
         always {
+            sh 'pkill -f app.py || true'
             cleanWs()
         }
     }
