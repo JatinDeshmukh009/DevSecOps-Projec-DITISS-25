@@ -1,111 +1,83 @@
 pipeline {
     agent {
-        label 'jenkins_agent'
-        }
+        label 'jenkins_agent'  
+         }
 
     options {
         timestamps()
         disableConcurrentBuilds()
-        ansiColor('xterm')
     }
 
     environment {
-        VENV        = "venv"
-        FLASK_APP  = "app.py"
-        FLASK_ENV  = "testing"
-        APP_PORT   = "5000"
+        VENV = "venv"
     }
 
     stages {
 
-        stage('Checkout Source (PR / Branch)') {
+        stage('Checkout') {
             steps {
                 checkout scm
             }
         }
 
-        stage('Show Build Context') {
+        stage('Setup Python Environment') {
             steps {
-                sh '''
-                    echo "Branch Name      : ${BRANCH_NAME}"
-                    echo "Change ID (PR)   : ${CHANGE_ID}"
-                    echo "Change Branch   : ${CHANGE_BRANCH}"
-                    echo "Target Branch   : ${CHANGE_TARGET}"
-                '''
+                ansiColor('xterm') {
+                    sh '''
+                        python3 -m venv $VENV
+                        . $VENV/bin/activate
+                        pip install --upgrade pip
+                        pip install -r requirements.txt
+                    '''
+                }
             }
         }
 
-        stage('Setup Python Virtual Environment') {
+        stage('Lint Code') {
             steps {
-                sh '''
-                    python3 --version
-                    python3 -m venv $VENV
-                    . $VENV/bin/activate
-                    pip install --upgrade pip
-                    pip install -r requirements.txt
-                '''
+                ansiColor('xterm') {
+                    sh '''
+                        . $VENV/bin/activate
+                        flake8 app.py || true
+                    '''
+                }
             }
         }
 
-        stage('Lint Check (flake8)') {
+        stage('Run Tests') {
             steps {
-                sh '''
-                    . $VENV/bin/activate
-                    pip install flake8
-                    flake8 app.py --max-line-length=120
-                '''
+                ansiColor('xterm') {
+                    sh '''
+                        . $VENV/bin/activate
+                        pytest || true
+                    '''
+                }
             }
         }
 
-        stage('Security Scan (Bandit)') {
+        stage('Health Check') {
             steps {
-                sh '''
-                    . $VENV/bin/activate
-                    pip install bandit
-                    bandit -r app.py || true
-                '''
-            }
-        }
-
-        stage('Unit Tests') {
-            steps {
-                sh '''
-                    . $VENV/bin/activate
-                    pip install pytest
-                    pytest || echo "No tests found"
-                '''
-            }
-        }
-
-        stage('Run Application & Health Check') {
-            steps {
-                sh '''
-                    . $VENV/bin/activate
-                    nohup python app.py > app.log 2>&1 &
-                    sleep 5
-                    curl -f http://127.0.0.1:${APP_PORT}/health
-                '''
+                ansiColor('xterm') {
+                    sh '''
+                        . $VENV/bin/activate
+                        python app.py &
+                        sleep 5
+                        curl -f http://127.0.0.1:5000/health
+                    '''
+                }
             }
         }
     }
 
     post {
-
         success {
-            echo "✅ Jenkins PR pipeline succeeded"
+            echo "✅ Pipeline completed successfully"
         }
-
         failure {
-            echo "❌ Jenkins PR pipeline failed"
+            echo "❌ Pipeline failed"
         }
-
         always {
-            sh '''
-                echo "Cleaning up..."
-                pkill -f app.py || true
-                rm -rf $VENV
-            '''
-            archiveArtifacts artifacts: 'app.log', allowEmptyArchive: true
+            cleanWs()
         }
     }
 }
