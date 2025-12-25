@@ -1,5 +1,5 @@
 # Use lightweight Python image
-FROM python:3.12-alpine
+FROM python
 
 # Set working directory
 WORKDIR /bin
