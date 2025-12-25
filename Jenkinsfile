@@ -112,7 +112,7 @@ pipeline {
                 ansiColor('xterm') {
                     sh '''
                         docker push $IMAGE_NAME:$IMAGE_TAG
-                        docker push $IMAGE_NAME:latest
+                        
                     '''
                 }
             }
