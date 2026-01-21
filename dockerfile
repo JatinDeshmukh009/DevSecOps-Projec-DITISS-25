@@ -2,7 +2,7 @@
 FROM python
 
 # Set working directory
-WORKDIR /bin
+WORKDIR /bin 
 
 # Copy dependency file first (layer caching)
 COPY requirements.txt .

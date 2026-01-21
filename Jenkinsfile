@@ -80,8 +80,12 @@ pipeline {
                     passwordVariable: 'DOCKER_PASS'
                 )]) {
                     ansiColor('xterm') {
+                        script {
+                            IMAGE_NAME = "${DOCKER_USER}/${IMAGE_REPO}"
+                        }
+                        
                         sh '''
-                            IMAGE_NAME=$DOCKER_USER/$IMAGE_REPO
+                            
 
                             docker build -t $IMAGE_NAME:$IMAGE_TAG .
                             docker tag $IMAGE_NAME:$IMAGE_TAG $IMAGE_NAME:latest
