@@ -11,7 +11,7 @@ pipeline {
     environment {
         VENV = "venv"
         IMAGE_REPO = "flask-app"
-        IMAGE_TAG  = "${BUILD_NUMBER}"
+        IMAGE_TAG  = "latest"
     }
 
     stages {
