@@ -85,13 +85,28 @@ pipeline {
                         }
                         
                         sh '''
-                            
-
                             docker build -t $IMAGE_NAME:$IMAGE_TAG .
                             docker tag $IMAGE_NAME:$IMAGE_TAG $IMAGE_NAME:latest
                         '''
                     }
                 }
+            }
+        }
+        stage('Trivy Image Scan') {
+            steps {
+                sh '''
+                echo "======================================"
+                echo " Trivy Image Security Scan"
+                echo " Image: $IMAGE_NAME:$IMAGE_TAG"
+                echo "======================================"
+
+                trivy image \
+                    --severity HIGH,CRITICAL \
+                    --format html \
+                    --output trivy-report.html \
+                    --no-progress \
+                    $IMAGE_NAME:$IMAGE_TAG
+                '''
             }
         }
 
@@ -124,15 +139,16 @@ pipeline {
     }
 
     post {
+        always {
+            archiveArtifacts artifacts: 'trivy-report.html', fingerprint: true
+            sh 'pkill -f app.py || true'
+            cleanWs()
+        }
         success {
             echo "✅ Pipeline completed successfully"
         }
         failure {
             echo "❌ Pipeline failed"
-        }
-        always {
-            sh 'pkill -f app.py || true'
-            cleanWs()
         }
     }
 }
