@@ -81,7 +81,7 @@ pipeline {
                 )]) {
                     ansiColor('xterm') {
                         script {
-                            IMAGE_NAME = "${DOCKER_USER}/${IMAGE_REPO}"
+                            env.IMAGE_NAME = "${DOCKER_USER}/${IMAGE_REPO}"
                         }
                         
                         sh '''
