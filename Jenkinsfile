@@ -102,7 +102,8 @@ pipeline {
 
                 trivy image \
                     --severity HIGH,CRITICAL \
-                    --format html \
+                    --format template \
+                    --template "@contrib/html.tpl" \
                     --output trivy-report.html \
                     --no-progress \
                     $IMAGE_NAME:$IMAGE_TAG
