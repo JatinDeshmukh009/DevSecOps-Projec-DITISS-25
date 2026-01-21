@@ -92,24 +92,34 @@ pipeline {
                 }
             }
         }
+
+
         stage('Trivy Image Scan') {
             steps {
                 sh '''
-                echo "======================================"
-                echo " Trivy Image Security Scan"
-                echo " Image: $IMAGE_NAME:$IMAGE_TAG"
-                echo "======================================"
+                    echo "======================================"
+                    echo " Trivy Image Security Scan"
+                    echo " Image: $IMAGE_NAME:$IMAGE_TAG"
+                    echo "======================================"
 
-                trivy image \
-                    --severity HIGH,CRITICAL \
-                    --format template \
-                    --template "@contrib/html.tpl" \
-                    --output trivy-report.html \
-                    --no-progress \
-                    $IMAGE_NAME:$IMAGE_TAG
+                    # Download Trivy HTML template if not present
+                    if [ ! -f html.tpl ]; then
+                    curl -sSL \
+                        https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/html.tpl \
+                        -o html.tpl
+                    fi
+
+                    trivy image \
+                        --severity HIGH,CRITICAL \
+                        --format template \
+                        --template "@html.tpl" \
+                        --output trivy-report.html \
+                        --no-progress \
+                        $IMAGE_NAME:$IMAGE_TAG
                 '''
             }
         }
+
 
         stage('Docker Login') {
             steps {
