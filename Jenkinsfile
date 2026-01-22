@@ -11,7 +11,7 @@ pipeline {
     environment {
         VENV = "venv"
         IMAGE_REPO = "flask-app"
-        IMAGE_TAG  = "latest"
+        
     }
 
     stages {
@@ -82,6 +82,7 @@ pipeline {
                     ansiColor('xterm') {
                         script {
                             env.IMAGE_NAME = "${DOCKER_USER}/${IMAGE_REPO}"
+                            env.IMAGE_TAG = "${BUILD_NUMBER}"
                         }
                         
                         sh '''
