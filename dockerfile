@@ -2,7 +2,7 @@
 FROM python:3.10-alpine
 
 # Set working directory
-WORKDIR /bin 
+WORKDIR /app
 
 # Copy dependency file first (layer caching)
 COPY requirements.txt .
