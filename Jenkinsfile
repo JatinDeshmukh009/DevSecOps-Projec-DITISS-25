@@ -11,6 +11,7 @@ pipeline {
     environment {
         VENV = "venv"
         IMAGE_REPO = "flask-app"
+        SONAR_HOME = tool "sonar"
         
     }
 
@@ -26,7 +27,7 @@ pipeline {
             steps {
                 withSonarQubeEnv('sonarqube-server'){
                     sh '''
-                      sonar-scanner \
+                      $SONAR_HOME/bin/sonar-scanner \
                       -Dsonar.projectKey=flask-app \
                       -Dsoanr.sources=.
                       
