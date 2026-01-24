@@ -199,6 +199,7 @@ pipeline {
             }
             steps {
                 sh '''
+                  git checkout main
                   sed -i "s|image: .*|image: ${IMAGE_NAME}:${BUILD_NUMBER}|" k8s-manifest/deployment.yaml
 
                   git config user.email "jenkins@ci.local"
