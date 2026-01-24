@@ -12,6 +12,7 @@ pipeline {
         VENV = "venv"
         IMAGE_REPO = "flask-app"
         SONAR_HOME = tool "sonar"
+        SKIP_CI = "false"
         
     }
 
@@ -171,7 +172,44 @@ pipeline {
                 }
             }
         }
-    }
+
+    
+        stage('Check CI Skip') {
+            steps {
+                script {
+                    def commitMsg = sh(
+                        script: "git log -1 --pretty=%B",
+                        returnStdout: true
+                    ).trim()
+
+                    if (commitMsg.contains('[ci skip]')) {
+                        echo "🛑 [ci skip] detected – skipping K8s manifest update"
+                        env.SKIP_CI = "true"
+                    } else {
+                        echo "✅ No ci skip detected"
+                    }
+                }
+            }
+        }
+   
+        stage('Commit K8s Manifests') {
+            when {
+                expression { env.SKIP_CI == "false" }
+            }
+            steps {
+                sh '''
+                  sed -i "s|image: .*|image: ${IMAGE_NAME}:${BUILD_NUMBER}|" k8s/deployment.yaml
+
+                  git config user.email "jenkins@ci.local"
+                  git config user.name "jenkins"
+
+                  git add k8s/deployment.yaml
+                  git commit -m "[ci skip] update image to ${BUILD_NUMBER}" || echo "No changes"
+                  git push origin main
+                '''
+            }
+        }
+    }        
 
     post {
         always {
