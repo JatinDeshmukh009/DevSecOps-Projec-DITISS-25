@@ -13,6 +13,7 @@ pipeline {
         IMAGE_REPO = "flask-app"
         SONAR_HOME = tool "sonar"
         SKIP_CI = "false"
+        IMAGE_TAG = "${BUILD_NUMBER}"
         
     }
 
@@ -30,7 +31,7 @@ pipeline {
                     sh '''
                       $SONAR_HOME/bin/sonar-scanner \
                       -Dsonar.projectKey=flask-app \
-                      -Dsoanr.sources=.
+                      -Dsonar.sources=.
                       
                       '''
                 }
@@ -198,7 +199,7 @@ pipeline {
             }
             steps {
                 sh '''
-                  sed -i "s|image: .*|image: ${IMAGE_NAME}:${BUILD_NUMBER}|" k8s/deployment.yaml
+                  sed -i "s|image: .*|image: ${IMAGE_NAME}:${BUILD_NUMBER}|" k8s-manifest/deployment.yaml
 
                   git config user.email "jenkins@ci.local"
                   git config user.name "jenkins"
