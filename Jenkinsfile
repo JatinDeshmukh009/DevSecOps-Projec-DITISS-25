@@ -205,7 +205,6 @@ pipeline {
                 )]) {
                     sh '''
                     git checkout main
-
                     sed -i "s|image: .*|image: ${IMAGE_NAME}:${BUILD_NUMBER}|" k8s-manifest/deployment.yaml
 
                     git config user.email "jenkins@ci.local"
@@ -214,7 +213,7 @@ pipeline {
                     git add k8s-manifest/deployment.yaml
                     git commit -m "[ci skip] update image to ${BUILD_NUMBER}" || echo "No changes"
 
-                    git push https://${GIT_USER}:${GIT_PASS}@github.com/<ORG>/<REPO>.git main
+                    git push https://${GIT_USER}:${GIT_PASS}@github.com/JatinDeshmukh009/DevSecOps-Projec-DITISS-25.git main
                     '''
                 }
             }
