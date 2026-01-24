@@ -204,7 +204,7 @@ pipeline {
                   git config user.email "jenkins@ci.local"
                   git config user.name "jenkins"
 
-                  git add k8s/deployment.yaml
+                  git add k8s-manifest/deployment.yaml
                   git commit -m "[ci skip] update image to ${BUILD_NUMBER}" || echo "No changes"
                   git push origin main
                 '''
