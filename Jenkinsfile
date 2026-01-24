@@ -198,20 +198,29 @@ pipeline {
                 expression { env.SKIP_CI == "false" }
             }
             steps {
-                sh '''
-                  git checkout main
-                  sed -i "s|image: .*|image: ${IMAGE_NAME}:${BUILD_NUMBER}|" k8s-manifest/deployment.yaml
+                withCredentials([usernamePassword(
+                    credentialsId: 'github-private-token',
+                    usernameVariable: 'GIT_USER',
+                    passwordVariable: 'GIT_PASS'
+                )]) {
+                    sh '''
+                    git checkout main
 
-                  git config user.email "jenkins@ci.local"
-                  git config user.name "jenkins"
+                    sed -i "s|image: .*|image: ${IMAGE_NAME}:${BUILD_NUMBER}|" k8s-manifest/deployment.yaml
 
-                  git add k8s-manifest/deployment.yaml
-                  git commit -m "[ci skip] update image to ${BUILD_NUMBER}" || echo "No changes"
-                  git push origin main
-                '''
+                    git config user.email "jenkins@ci.local"
+                    git config user.name "jenkins"
+
+                    git add k8s-manifest/deployment.yaml
+                    git commit -m "[ci skip] update image to ${BUILD_NUMBER}" || echo "No changes"
+
+                    git push https://${GIT_USER}:${GIT_PASS}@github.com/<ORG>/<REPO>.git main
+                    '''
+                }
             }
         }
-    }        
+        
+    }
 
     post {
         always {
