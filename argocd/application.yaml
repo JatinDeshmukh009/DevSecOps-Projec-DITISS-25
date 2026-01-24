@@ -9,7 +9,7 @@ spec:
   source:
     repoURL: https://github.com/JatinDeshmukh009/DevSecOps-Projec-DITISS-25.git
     targetRevision: main
-    path: k8s
+    path: k8s-manifest
 
   destination:
     server: https://kubernetes.default.svc
