@@ -12,7 +12,6 @@ pipeline {
         VENV = "venv"
         IMAGE_REPO = "flask-app"
         SONAR_HOME = tool "sonar"
-        SKIP_CI = "false"
         IMAGE_TAG = "${BUILD_NUMBER}"
         
     }
@@ -174,29 +173,9 @@ pipeline {
             }
         }
 
-    
-        stage('Check CI Skip') {
-            steps {
-                script {
-                    def commitMsg = sh(
-                        script: "git log -1 --pretty=%B",
-                        returnStdout: true
-                    ).trim()
-
-                    if (commitMsg.contains('[ci skip]')) {
-                        echo "🛑 [ci skip] detected – skipping K8s manifest update"
-                        env.SKIP_CI = "true"
-                    } else {
-                        echo "✅ No ci skip detected"
-                    }
-                }
-            }
-        }
    
         stage('Commit K8s Manifests') {
-            when {
-                expression { env.SKIP_CI == "false" }
-            }
+            
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: 'github-private-token',
@@ -204,16 +183,20 @@ pipeline {
                     passwordVariable: 'GIT_PASS'
                 )]) {
                     sh '''
-                    git checkout main
+                    git fetch origin
+
+                    git checkout deploy
+                    git pull origin deploy
+
                     sed -i "s|image: .*|image: ${IMAGE_NAME}:${BUILD_NUMBER}|" k8s-manifest/deployment.yaml
 
                     git config user.email "jenkins@ci.local"
                     git config user.name "jenkins"
 
                     git add k8s-manifest/deployment.yaml
-                    git commit -m "[ci skip] update image to ${BUILD_NUMBER}" || echo "No changes"
+                    git commit -m "update image to ${BUILD_NUMBER}" || echo "No changes"
 
-                    git push https://${GIT_USER}:${GIT_PASS}@github.com/JatinDeshmukh009/DevSecOps-Projec-DITISS-25.git main
+                    git push https://${GIT_USER}:${GIT_PASS}@github.com/JatinDeshmukh009/DevSecOps-Projec-DITISS-25.git deploy
                     '''
                 }
             }
